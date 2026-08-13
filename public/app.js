@@ -4,79 +4,154 @@ document.addEventListener("DOMContentLoaded", () => {
     switchRole();
 });
 
-async function switchRole() {
+function switchRole() {
     const role = document.getElementById("profileSelect").value;
-    const container = document.getElementById("ticketsContainer");
-    container.innerHTML = "<p>Loading tickets...</p>";
 
-    try {
-        const response = await fetch(`${BACKEND_API}/api/tickets?role=${role}`);
-        const data = await response.json();
+    // Hide all sections
+    document.getElementById("customerView").classList.remove("active");
+    document.getElementById("departmentView").classList.remove("active");
+    document.getElementById("adminView").classList.remove("active");
 
-        container.innerHTML = "";
-
-        if (data.tickets.length === 0) {
-            container.innerHTML = `<p class="empty-msg">No tickets currently in the ${role} queue.</p>`;
-            return;
-        }
-
-        if (role === "Admin") {
-            renderAdminView(data.tickets, container);
-        } else {
-            renderDepartmentView(data.tickets, container);
-        }
-    } catch (err) {
-        container.innerHTML = `<p class="error-msg">Failed to load tickets. Check backend connectivity.</p>`;
+    if (role === "Customer") {
+        document.getElementById("customerView").classList.add("active");
+    } else if (role === "Admin") {
+        document.getElementById("adminView").classList.add("active");
+        loadTickets(role);
+    } else {
+        document.getElementById("departmentView").classList.add("active");
+        document.getElementById("deptTitle").innerText = `${role} Department Queue`;
+        loadTickets(role);
     }
 }
 
-function renderDepartmentView(tickets, container) {
+async function handleTicketSubmit(event) {
+    event.preventDefault();
+    const statusBanner = document.getElementById("submitStatus");
+    const submitBtn = document.getElementById("submitBtn");
+
+    const payload = {
+        sender: document.getElementById("senderEmail").value,
+        subject: document.getElementById("subject").value,
+        body: document.getElementById("body").value
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Processing ML Classification...";
+
+    try {
+        const response = await fetch(`${BACKEND_API}/api/tickets/incoming`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            statusBanner.className = "status-banner success";
+            statusBanner.innerText = `✅ Ticket Created & Classified as [${data.ticket.category}] (${(data.ticket.confidence * 100).toFixed(1)}% confidence)`;
+            document.getElementById("ticketForm").reset();
+        } else {
+            throw new Error(data.error || "Submission failed");
+        }
+    } catch (err) {
+        statusBanner.className = "status-banner error";
+        statusBanner.innerText = `❌ Error: ${err.message}`;
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "🚀 Send Ticket";
+    }
+}
+
+async function loadTickets(role) {
+    try {
+        const response = await fetch(`${BACKEND_API}/api/tickets`);
+        const allTickets = await response.json();
+
+        if (role === "Admin") {
+            renderAdminView(allTickets);
+        } else {
+            // Filter tickets matching selected department role
+            const filtered = allTickets.filter(t => t.category.toLowerCase() === role.toLowerCase());
+            renderDepartmentView(filtered);
+        }
+    } catch (err) {
+        console.error("Failed to fetch tickets:", err);
+    }
+}
+
+function renderDepartmentView(tickets) {
+    const container = document.getElementById("departmentTickets");
+    const countBadge = document.getElementById("ticketCountBadge");
+    
+    countBadge.innerText = `${tickets.length} Tickets`;
+    container.innerHTML = "";
+
+    if (tickets.length === 0) {
+        container.innerHTML = `<p class="subtitle">No active tickets assigned to this department queue.</p>`;
+        return;
+    }
+
     tickets.forEach(t => {
         const card = document.createElement("div");
         card.className = "ticket-card";
         card.innerHTML = `
             <h3>${t.subject}</h3>
-            <p class="meta"><strong>From:</strong> ${t.sender} | <strong>Confidence:</strong> ${(t.confidence * 100).toFixed(1)}%</p>
+            <div class="meta">
+                <span>From: ${t.sender}</span> • 
+                <span class="confidence-tag">${(t.confidence * 100).toFixed(1)}% Match</span>
+            </div>
             <p class="body">${t.body}</p>
-            <span class="timestamp">${t.timestamp}</span>
+            <span class="meta">${t.timestamp}</span>
         `;
         container.appendChild(card);
     });
 }
 
-function renderAdminView(tickets, container) {
-    const table = document.createElement("table");
-    table.className = "admin-table";
-    table.innerHTML = `
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Sender</th>
-                <th>Subject</th>
-                <th>Category</th>
-                <th>Confidence</th>
-                <th>Probability Breakdown (Billing | Tech | HR | General)</th>
-                <th>Time</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${tickets.map(t => `
+function renderAdminView(tickets) {
+    const container = document.getElementById("adminTableContainer");
+
+    if (tickets.length === 0) {
+        container.innerHTML = `<p class="subtitle">No tickets found in the system database.</p>`;
+        return;
+    }
+
+    let html = `
+        <table class="admin-table">
+            <thead>
                 <tr>
-                    <td>#${t.id}</td>
-                    <td>${t.sender}</td>
-                    <td>${t.subject}</td>
-                    <td><span class="badge">${t.category}</span></td>
-                    <td>${(t.confidence * 100).toFixed(1)}%</td>
-                    <td class="prob-matrix">
-                        B: ${(t.prob_billing * 100).toFixed(1)}% | 
-                        T: ${(t.prob_technical * 100).toFixed(1)}% | 
-                        H: ${(t.prob_hr * 100).toFixed(1)}% | 
-                        G: ${(t.prob_general * 100).toFixed(1)}%
-                    </td>
-                    <td>${t.timestamp}</td>
+                    <th>ID</th>
+                    <th>Sender</th>
+                    <th>Subject</th>
+                    <th>Category</th>
+                    <th>Confidence</th>
+                    <th>Probabilities (Bill | Tech | HR | Gen)</th>
+                    <th>Timestamp</th>
                 </tr>
-            `).join('')}
-        </tbody>
+            </thead>
+            <tbody>
     `;
-    container.appendChild(table);
+
+    tickets.forEach(t => {
+        const p = t.probabilities;
+        html += `
+            <tr>
+                <td>#${t.id}</td>
+                <td>${t.sender}</td>
+                <td>${t.subject}</td>
+                <td><span class="badge count-badge">${t.category}</span></td>
+                <td><span class="confidence-tag">${(t.confidence * 100).toFixed(1)}%</span></td>
+                <td class="prob-matrix">
+                    B: ${(p.Billing * 100).toFixed(0)}% | 
+                    T: ${(p.Technical * 100).toFixed(0)}% | 
+                    H: ${(p.HR * 100).toFixed(0)}% | 
+                    G: ${(p.General * 100).toFixed(0)}%
+                </td>
+                <td>${t.timestamp}</td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
 }

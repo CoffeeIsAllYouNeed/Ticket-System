@@ -1,32 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AutoRoute AI - Ticket Management Portal</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Granola.AI Support Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>AutoRoute AI Portal</h1>
-      <div class="role-selector">
-        <label for="profileSelect">Select Role Profile: </label>
-        <select id="profileSelect" onchange="switchRole()">
-          <option value="HR">HR Department</option>
-          <option value="Billing">Billing Department</option>
-          <option value="Technical">Technical Support</option>
-          <option value="General">General Inquiries</option>
-          <option value="Admin">Admin (Full Control + Probabilities)</option>
-        </select>
-      </div>
+    <header class="app-header">
+        <div class="logo">
+            <span class="logo-icon">⚡</span>
+            <h1>Granola.AI <span>Support Portal</span></h1>
+        </div>
+        <div class="role-selector-container">
+            <label for="profileSelect">Switch Role:</label>
+            <select id="profileSelect" onchange="switchRole()">
+                <option value="Customer">🙋‍♂️ Customer (Submit Ticket)</option>
+                <option value="Technical">💻 Technical Support</option>
+                <option value="Billing">💳 Billing & Finance</option>
+                <option value="HR">👥 Human Resources</option>
+                <option value="Admin">🛡️ System Administrator</option>
+            </select>
+        </div>
     </header>
 
-    <main id="portalContent">
-      <div id="ticketsContainer" class="ticket-grid"></div>
+    <main class="container">
+        <!-- Customer View: Submit Ticket Form -->
+        <section id="customerView" class="dashboard-section active">
+            <div class="card form-card">
+                <h2>📩 Submit a Customer Complaint / Inquiry</h2>
+                <p class="subtitle">Fill out the details below. Our AI classifier will route your issue to the correct team in real time.</p>
+                <form id="ticketForm" onsubmit="handleTicketSubmit(event)">
+                    <div class="form-group">
+                        <label for="senderEmail">Your Email</label>
+                        <input type="email" id="senderEmail" placeholder="customer@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">Subject</label>
+                        <input type="text" id="subject" placeholder="e.g., Charged twice for subscription" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="body">Message / Issue Details</label>
+                        <textarea id="body" rows="5" placeholder="Describe your issue in detail..." required></textarea>
+                    </div>
+                    <button type="submit" id="submitBtn" class="btn primary-btn">
+                        <span>🚀 Send Ticket</span>
+                    </button>
+                </form>
+                <div id="submitStatus" class="status-banner"></div>
+            </div>
+        </section>
+
+        <!-- Department Queue View -->
+        <section id="departmentView" class="dashboard-section">
+            <div class="dashboard-header">
+                <h2 id="deptTitle">Department Queue</h2>
+                <span id="ticketCountBadge" class="badge count-badge">0 Tickets</span>
+            </div>
+            <div id="departmentTickets" class="tickets-grid"></div>
+        </section>
+
+        <!-- Admin Dashboard View -->
+        <section id="adminView" class="dashboard-section">
+            <div class="dashboard-header">
+                <h2>🛡️ System Administrator Oversight</h2>
+                <p class="subtitle">Full ML routing transparency, confidence metrics, and category probabilities.</p>
+            </div>
+            <div class="card table-card">
+                <div id="adminTableContainer"></div>
+            </div>
+        </section>
     </main>
-  </div>
-  <script src="config.js"></script>
-  <script src="app.js"></script>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
