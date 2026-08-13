@@ -3,7 +3,6 @@
 .env.local
 
 # Frontend Local Configs
-public/config.js
 
 # Database
 *.db
