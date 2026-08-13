@@ -1,6 +1,5 @@
 import json
 import joblib
-import pandas as pd
 from sklearn.model_selection import train_test_split
 from src.config import (
     DATA_PATH, MODEL_PATH, VECTORIZER_PATH, METRICS_PATH, 

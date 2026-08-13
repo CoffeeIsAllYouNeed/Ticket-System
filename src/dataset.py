@@ -1,6 +1,5 @@
 import re
 import pandas as pd
-from typing import Tuple
 
 
 def clean_text(text: str) -> str:
@@ -8,7 +7,7 @@ def clean_text(text: str) -> str:
         return ""
     text = text.lower()
     text = re.sub(r"\{product_purchased\}", "product", text)
-    text = re.sub(r"http\S+|www\S+ |https\S+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"http\S+|www\S+|https\S+", "", text, flags=re.MULTILINE)
     text = re.sub(r"\S+@\S+", "", text)
     text = re.sub(r"[^a-zA-Z\s]", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
@@ -35,7 +34,7 @@ def load_raw_dataset(filepath: str) -> pd.DataFrame:
     df["text"] = df[subject_col].fillna("") + " " + df[desc_col].fillna("")
     df["clean_text"] = df["text"].apply(clean_text)
     df["category"] = df.apply(lambda r: map_category(r[type_col], r[subject_col]), axis=1)
-    
+
     return df[["clean_text", "category"]].dropna()
 
 

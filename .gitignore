@@ -1,0 +1,21 @@
+# Environment Variables
+.env
+.env.local
+
+# Frontend Local Configs
+public/config.js
+
+# Database
+*.db
+database.db
+
+# Virtual Environment
+granola.ai/
+venv/
+__pycache__/
+*.pyc
+
+# OS & IDE Files
+.DS_Store
+.vscode/
+.idea/

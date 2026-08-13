@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - All Tickets & Probabilities</title>
+    <style>
+        body { background: #0b0f19; color: #f1f5f9; font-family: sans-serif; padding: 32px; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        table { width: 100%; border-collapse: collapse; background: #151c2e; border-radius: 8px; overflow: hidden; border: 1px solid #2e3a59; }
+        th, td { padding: 14px; border-bottom: 1px solid #2e3a59; text-align: left; font-size: 0.875rem; }
+        th { background: #0f172a; color: #94a3b8; }
+        .badge { background: rgba(56, 189, 248, 0.2); color: #38bdf8; padding: 4px 10px; border-radius: 12px; font-weight: bold; }
+        .prob-matrix { font-size: 0.8rem; color: #cbd5e1; font-family: monospace; }
+        .logout { color: #ef4444; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Admin Control Panel - Probability Breakdown</h1>
+        <a href="/logout" class="logout">Logout</a>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>From</th>
+                <th>Subject</th>
+                <th>Assigned Queue</th>
+                <th>Confidence</th>
+                <th>Probability Breakdown (Billing | Tech | HR | General)</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in tickets %}
+            <tr>
+                <td>#{{ t[0] }}</td>
+                <td>{{ t[1] }}</td>
+                <td>{{ t[2] }}</td>
+                <td><span class="badge">{{ t[4] }}</span></td>
+                <td>{{ "%.1f"|format(t[5] * 100) }}%</td>
+                <td class="prob-matrix">
+                    B: {{ "%.1f"|format(t[6] * 100) }}% | 
+                    T: {{ "%.1f"|format(t[7] * 100) }}% | 
+                    H: {{ "%.1f"|format(t[8] * 100) }}% | 
+                    G: {{ "%.1f"|format(t[9] * 100) }}%
+                </td>
+                <td>{{ t[10] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
