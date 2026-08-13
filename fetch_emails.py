@@ -1,42 +1,21 @@
 import imaplib
 import os
 import email
-import sqlite3
 import time
 from email.header import decode_header
 
 from dotenv import load_dotenv
+
+from src.db import init_db, insert_ticket
 from src.predict import Predictor
 
 load_dotenv()
 
 IMAP_SERVER = "imap.gmail.com"
-EMAIL_ACCOUNT = "granola.ai.support@gmail.com"
+EMAIL_ACCOUNT = os.getenv("SUPPORT_EMAIL_ACCOUNT", "")
 EMAIL_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 
 predictor = Predictor()
-
-
-def init_db():
-    conn = sqlite3.connect("database.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tickets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sender TEXT,
-            subject TEXT,
-            body TEXT,
-            category TEXT,
-            confidence REAL,
-            prob_billing REAL,
-            prob_technical REAL,
-            prob_hr REAL,
-            prob_general REAL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    conn.commit()
-    conn.close()
 
 
 def process_unread_emails():
@@ -51,9 +30,6 @@ def process_unread_emails():
         if not email_ids:
             mail.logout()
             return
-
-        conn = sqlite3.connect("database.db")
-        cursor = conn.cursor()
 
         for e_id in email_ids:
             _, msg_data = mail.fetch(e_id, "(RFC822)")
@@ -77,23 +53,10 @@ def process_unread_emails():
                         body = msg.get_payload(decode=True).decode(errors="ignore")
 
                     res = predictor.predict_one(subject, body)
-                    probas = res["probabilities"]
-
-                    cursor.execute("""
-                        INSERT INTO tickets (sender, subject, body, category, confidence, prob_billing, prob_technical, prob_hr, prob_general)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
-                        sender, subject, body, res["category"], res["confidence"],
-                        probas.get("Billing", 0.0),
-                        probas.get("Technical", 0.0),
-                        probas.get("HR", 0.0),
-                        probas.get("General", 0.0)
-                    ))
-                    conn.commit()
+                    insert_ticket(sender, subject, body, res)
                     print(f"Successfully processed and routed email from {sender} to [{res['category']}] queue.")
 
         mail.logout()
-        conn.close()
     except Exception as e:
         print(f"Fetch Error: {e}")
 

@@ -1,5 +1,14 @@
 const BACKEND_API = window.ENV?.BACKEND_API || "http://127.0.0.1:5000";
 
+// Ticket subject/sender/body come from user input (customers, or raw emails)
+// and must never be inserted into innerHTML unescaped, or a malicious ticket
+// could run arbitrary script in a staff member's browser.
+function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value ?? "";
+    return div.innerHTML;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     switchRole();
 });
@@ -96,13 +105,13 @@ function renderDepartmentView(tickets) {
         const card = document.createElement("div");
         card.className = "ticket-card";
         card.innerHTML = `
-            <h3>${t.subject}</h3>
+            <h3>${escapeHtml(t.subject)}</h3>
             <div class="meta">
-                <span>From: ${t.sender}</span> • 
+                <span>From: ${escapeHtml(t.sender)}</span> • 
                 <span class="confidence-tag">${(t.confidence * 100).toFixed(1)}% Match</span>
             </div>
-            <p class="body">${t.body}</p>
-            <span class="meta">${t.timestamp}</span>
+            <p class="body">${escapeHtml(t.body)}</p>
+            <span class="meta">${escapeHtml(t.timestamp)}</span>
         `;
         container.appendChild(card);
     });
@@ -137,9 +146,9 @@ function renderAdminView(tickets) {
         html += `
             <tr>
                 <td>#${t.id}</td>
-                <td>${t.sender}</td>
-                <td>${t.subject}</td>
-                <td><span class="badge count-badge">${t.category}</span></td>
+                <td>${escapeHtml(t.sender)}</td>
+                <td>${escapeHtml(t.subject)}</td>
+                <td><span class="badge count-badge">${escapeHtml(t.category)}</span></td>
                 <td><span class="confidence-tag">${(t.confidence * 100).toFixed(1)}%</span></td>
                 <td class="prob-matrix">
                     B: ${(p.Billing * 100).toFixed(0)}% | 
@@ -147,7 +156,7 @@ function renderAdminView(tickets) {
                     H: ${(p.HR * 100).toFixed(0)}% | 
                     G: ${(p.General * 100).toFixed(0)}%
                 </td>
-                <td>${t.timestamp}</td>
+                <td>${escapeHtml(t.timestamp)}</td>
             </tr>
         `;
     });
