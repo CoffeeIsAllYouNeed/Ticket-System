@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Ticket Router - Enterprise Support Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <h2>AutoRoute AI</h2>
+      </div>
+
+      <nav class="nav-menu">
+        <a href="#" class="nav-item active">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Live Classifier
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="status-indicator">
+          <span class="dot"></span>
+          <span>Model Engine: Active</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <div>
+          <h1>Support Ticket Classification Engine</h1>
+          <p>Real-time automated ticket categorization and routing</p>
+        </div>
+      </header>
+
+      <div class="dashboard-grid">
+        <div class="card input-card">
+          <div class="card-header">
+            <h3>Incoming Ticket Inspector</h3>
+          </div>
+          
+          <div class="form-group">
+            <label for="ticketSubject">Ticket Subject</label>
+            <input type="text" id="ticketSubject" placeholder="e.g. Double charged on subscription invoice" />
+          </div>
+
+          <div class="form-group">
+            <label for="ticketBody">Message Body</label>
+            <textarea id="ticketBody" rows="6" placeholder="Paste incoming email or support ticket body..."></textarea>
+          </div>
+
+          <div class="button-group">
+            <button id="classifyBtn" class="btn btn-primary">Classify Ticket</button>
+            <button id="presetBtn" class="btn btn-secondary">Load Sample Ticket</button>
+          </div>
+        </div>
+
+        <div class="card result-card">
+          <div class="card-header">
+            <h3>Automated Classification Decision</h3>
+          </div>
+
+          <div id="resultContainer" class="result-container empty">
+            <div class="placeholder-state">
+              <p>Enter a ticket subject and body, or pick a sample preset to evaluate prediction speed and confidence.</p>
+            </div>
+            
+            <div class="prediction-content" style="display: none;">
+              <div class="primary-decision">
+                <span class="label">Predicted Category</span>
+                <div class="badge-row">
+                  <span id="categoryBadge" class="badge">Billing</span>
+                  <span id="confidenceText" class="confidence">98.4% Confidence</span>
+                </div>
+              </div>
+
+              <div class="probability-section">
+                <h4>Class Probability Breakdown</h4>
+                <div id="probabilityBars" class="bars-list"></div>
+              </div>
+
+              <div class="routing-action">
+                <h4>System Action</h4>
+                <div id="actionNote" class="action-box">Auto-routing to Billing Desk</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
