@@ -8,6 +8,15 @@ document.addEventListener("DOMContentLoaded", () => {
     switchRole();
 });
 
+// Helper function to trigger role switches from top navigation elements
+function selectRole(roleName) {
+    const profileSelect = document.getElementById("profileSelect");
+    if (profileSelect) {
+        profileSelect.value = roleName;
+        switchRole();
+    }
+}
+
 function escapeHtml(value) {
     const div = document.createElement("div");
     div.textContent = value ?? "";
@@ -75,14 +84,14 @@ async function handleTicketSubmit(event) {
         saveTicket(ticket);
 
         statusBanner.className = "status-banner success";
-        statusBanner.innerText = `✅ Ticket Created & Classified as [${ticket.category}] (${(ticket.confidence * 100).toFixed(1)}% confidence)`;
+        statusBanner.innerText = `Ticket Created & Classified as [${ticket.category}] (${(ticket.confidence * 100).toFixed(1)}% confidence)`;
         document.getElementById("ticketForm").reset();
     } catch (err) {
         statusBanner.className = "status-banner error";
-        statusBanner.innerText = `❌ Error: ${err.message}`;
+        statusBanner.innerText = `Error: ${err.message}`;
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerText = "🚀 Send Ticket";
+        submitBtn.innerText = "Send Ticket";
     }
 }
 
