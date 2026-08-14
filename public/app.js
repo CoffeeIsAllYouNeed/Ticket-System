@@ -1,22 +1,36 @@
-const BACKEND_API = window.ENV?.BACKEND_API || "http://127.0.0.1:5000";
+// Runs entirely client-side: classification via classifier.js (in-browser
+// TF-IDF + logistic regression using model_weights.json) and storage via
+// localStorage. No backend/API calls of any kind.
 
-// Ticket subject/sender/body come from user input (customers, or raw emails)
-// and must never be inserted into innerHTML unescaped, or a malicious ticket
-// could run arbitrary script in a staff member's browser.
+const STORAGE_KEY = "tickets";
+
+document.addEventListener("DOMContentLoaded", () => {
+    switchRole();
+});
+
 function escapeHtml(value) {
     const div = document.createElement("div");
     div.textContent = value ?? "";
     return div.innerHTML;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    switchRole();
-});
+function getTickets() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch {
+        return [];
+    }
+}
+
+function saveTicket(ticket) {
+    const tickets = getTickets();
+    tickets.push(ticket);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tickets));
+}
 
 function switchRole() {
     const role = document.getElementById("profileSelect").value;
 
-    // Hide all sections
     document.getElementById("customerView").classList.remove("active");
     document.getElementById("departmentView").classList.remove("active");
     document.getElementById("adminView").classList.remove("active");
@@ -38,31 +52,31 @@ async function handleTicketSubmit(event) {
     const statusBanner = document.getElementById("submitStatus");
     const submitBtn = document.getElementById("submitBtn");
 
-    const payload = {
-        sender: document.getElementById("senderEmail").value,
-        subject: document.getElementById("subject").value,
-        body: document.getElementById("body").value
-    };
+    const sender = document.getElementById("senderEmail").value;
+    const subject = document.getElementById("subject").value;
+    const body = document.getElementById("body").value;
 
     submitBtn.disabled = true;
     submitBtn.innerText = "Processing ML Classification...";
 
     try {
-        const response = await fetch(`${BACKEND_API}/api/tickets/incoming`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
+        const result = await classifyTicket(subject, body);
 
-        const data = await response.json();
+        const ticket = {
+            id: Date.now(),
+            sender,
+            subject,
+            body,
+            category: result.category,
+            confidence: result.confidence,
+            probabilities: result.probabilities,
+            timestamp: new Date().toISOString()
+        };
+        saveTicket(ticket);
 
-        if (response.ok) {
-            statusBanner.className = "status-banner success";
-            statusBanner.innerText = `✅ Ticket Created & Classified as [${data.ticket.category}] (${(data.ticket.confidence * 100).toFixed(1)}% confidence)`;
-            document.getElementById("ticketForm").reset();
-        } else {
-            throw new Error(data.error || "Submission failed");
-        }
+        statusBanner.className = "status-banner success";
+        statusBanner.innerText = `✅ Ticket Created & Classified as [${ticket.category}] (${(ticket.confidence * 100).toFixed(1)}% confidence)`;
+        document.getElementById("ticketForm").reset();
     } catch (err) {
         statusBanner.className = "status-banner error";
         statusBanner.innerText = `❌ Error: ${err.message}`;
@@ -72,27 +86,21 @@ async function handleTicketSubmit(event) {
     }
 }
 
-async function loadTickets(role) {
-    try {
-        const response = await fetch(`${BACKEND_API}/api/tickets`);
-        const allTickets = await response.json();
+function loadTickets(role) {
+    const allTickets = getTickets().slice().sort((a, b) => b.id - a.id);
 
-        if (role === "Admin") {
-            renderAdminView(allTickets);
-        } else {
-            // Filter tickets matching selected department role
-            const filtered = allTickets.filter(t => t.category.toLowerCase() === role.toLowerCase());
-            renderDepartmentView(filtered);
-        }
-    } catch (err) {
-        console.error("Failed to fetch tickets:", err);
+    if (role === "Admin") {
+        renderAdminView(allTickets);
+    } else {
+        const filtered = allTickets.filter(t => t.category.toLowerCase() === role.toLowerCase());
+        renderDepartmentView(filtered);
     }
 }
 
 function renderDepartmentView(tickets) {
     const container = document.getElementById("departmentTickets");
     const countBadge = document.getElementById("ticketCountBadge");
-    
+
     countBadge.innerText = `${tickets.length} Tickets`;
     container.innerHTML = "";
 

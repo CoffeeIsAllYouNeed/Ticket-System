@@ -1,6 +1,5 @@
 [build]
   publish = "public"
-  command = "python run.py"
 
 [[headers]]
   for = "/*"
